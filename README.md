@@ -108,19 +108,26 @@ columns has them combined into one name automatically. Email Address is
 read as email. Dept, Team, Business Unit, and Division are read as
 department. Application, App, Resource, Platform, and System Name are
 read as system. Role, Access Level, Permission Level, and Entitlement
-are read as permission. Grant Date and Granted Date are read as
-date_granted. Last Used, Last Login, and Last Activity are read as
-date_last_used. Status and Account Status are read as employee_status.
-Manager Name and Supervisor are read as manager. Matching ignores case
-and treats underscores the same as spaces, so DEPARTMENT, Department,
-and department all work.
+are read as permission. Grant Date, Granted Date, and Start Date are
+read as date_granted. Last Used, Last Login, and Last Activity are read
+as date_last_used. Status, Account Status, and Employment Status are
+read as employee_status. Manager Name, Supervisor, Host, and Sponsor
+are read as manager. Matching ignores case and treats underscores the
+same as spaces, so DEPARTMENT, Department, and department all work.
 
 This only covers naming, not meaning. A file still needs to actually
 carry the underlying concepts AccessLens reviews, who has access, to
 what, at what permission level, whether they are still employed, and
 who owns that access. A visitor log or a physical access record, for
 example, is a different kind of data entirely and will still be
-rejected, with a message naming exactly which columns are missing.
+rejected, with a message naming exactly which columns are missing, even
+after renaming its columns to match. A badge or door access system in
+particular often logs when access starts and when it expires, but not
+when it was actually used, and date_last_used means the second thing.
+An end date or expiry date is not the same fact as a last used date, so
+AccessLens does not guess one from the other, doing that would let an
+access review quietly report an account as recently used when it may
+never have been used at all.
 
 A sample export with a full set of realistic, deliberately planted issues
 lives at `tests/fixtures/sample_company_access.csv`, and a clean export
