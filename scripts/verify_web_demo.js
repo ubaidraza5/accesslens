@@ -63,6 +63,54 @@ function sortedEntries(obj) {
   return Object.entries(obj).sort((a, b) => a[0].localeCompare(b[0]));
 }
 
+function checkAlternateHeaders(engine) {
+  console.log("\nAlternate column names, mirrors test_access_parser.py");
+  let failures = 0;
+
+  const altHeaderCSV =
+    "Full Name,Email Address,Dept,Application,Role,Grant Date," +
+    "Last Login,Status,Manager Name\n" +
+    "Alice Chen,alice.chen@example.com,Finance,Finance ERP,Admin," +
+    "2025-01-01,2026-08-01,Active,Test Manager\n";
+  const altRecords = engine.parseAccessCSV(altHeaderCSV);
+  const altOk =
+    altRecords.length === 1 &&
+    altRecords[0].name === "Alice Chen" &&
+    altRecords[0].department === "Finance" &&
+    altRecords[0].system === "Finance ERP" &&
+    altRecords[0].permission === "Admin" &&
+    altRecords[0].employeeStatus === "Active" &&
+    altRecords[0].manager === "Test Manager";
+  console.log(`  ${altOk ? "PASS" : "FAIL"}  alternate header names accepted`);
+  if (!altOk) failures++;
+
+  const firstLastCSV =
+    "First Name,Last Name,email,department,system,permission," +
+    "date_granted,date_last_used,employee_status,manager\n" +
+    "Priya,Kapoor,priya.kapoor@example.com,Finance,Finance ERP," +
+    "Standard User,2025-01-01,2026-08-01,Active,Test Manager\n";
+  const firstLastRecords = engine.parseAccessCSV(firstLastCSV);
+  const firstLastOk = firstLastRecords[0].name === "Priya Kapoor";
+  console.log(`  ${firstLastOk ? "PASS" : "FAIL"}  first and last name columns combined`);
+  if (!firstLastOk) failures++;
+
+  const visitorLogCSV =
+    "First Name,Last Name,Email,Access Code,Start Date,Start Time," +
+    "End Date,End Time,Notes\n" +
+    "Robert,Miller,rob@contractor.com,884422,2026-09-10,08:00," +
+    "2026-09-12,17:00,HVAC Tech\n";
+  let visitorLogRejected = false;
+  try {
+    engine.parseAccessCSV(visitorLogCSV);
+  } catch (e) {
+    visitorLogRejected = e instanceof engine.ParseError;
+  }
+  console.log(`  ${visitorLogRejected ? "PASS" : "FAIL"}  unrelated columns still rejected`);
+  if (!visitorLogRejected) failures++;
+
+  return failures;
+}
+
 function main() {
   const enginePath = extractEngineScript();
   const engine = require(enginePath);
@@ -96,6 +144,8 @@ function main() {
       }
     }
   }
+
+  failures += checkAlternateHeaders(engine);
 
   fs.unlinkSync(enginePath);
 
