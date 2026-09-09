@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AccessLens, identity access review made simple</title>
+<style>
+  :root {
+    --bg: #f4f6f5;
+    --panel: #ffffff;
+    --ink: #16211c;
+    --ink-soft: #495a52;
+    --line: #dde4e0;
+    --accent: #0f6b5c;
+    --accent-soft: #e4f0ec;
+    --accent-dark: #0b4f44;
+    --critical: #b42318;
+    --high: #c2410c;
+    --medium: #a16207;
+    --low: #52606d;
+    --info: #6b7280;
+    --clean: #1a7f52;
+    --radius: 10px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body { line-height: 1.55; }
+  h1, h2, h3 { font-family: "Georgia", "Times New Roman", serif; margin: 0; }
+  a { color: var(--accent-dark); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.top {
+    background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+    color: #eef7f4;
+    padding: 44px 0 54px;
+  }
+  header.top .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #bfe3d8;
+    margin-bottom: 10px;
+  }
+  header.top h1 { font-size: 34px; color: #ffffff; margin-bottom: 10px; }
+  header.top p.lead { max-width: 620px; font-size: 15.5px; color: #dcf0ea; margin: 0; }
+  header.top .privacy {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: #eef7f4;
+  }
+
+  main { margin-top: -30px; padding-bottom: 70px; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(15, 40, 33, 0.08);
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-dark);
+    margin-bottom: 14px;
+  }
+
+  .input-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  button {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { background: var(--accent-dark); }
+  button.ghost { background: transparent; }
+  input[type="file"] { display: none; }
+
+  textarea {
+    width: 100%;
+    min-height: 150px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    resize: vertical;
+    color: var(--ink);
+    background: #fbfcfb;
+  }
+  .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+  .cols { font-family: monospace; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; color: var(--accent-dark); }
+
+  .modebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .toggle button { border: none; border-radius: 0; padding: 9px 18px; background: #fff; }
+  .toggle button.active { background: var(--accent); color: #fff; }
+
+  .score-row { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .gauge { width: 108px; height: 108px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 9px; }
+  .gauge .gauge-inner { width: 100%; height: 100%; border-radius: 50%; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04); }
+  .gauge .num { font-family: Georgia, serif; font-size: 27px; font-weight: 700; line-height: 1; }
+  .gauge .of100 { font-size: 10px; color: rgba(0,0,0,0.45); margin-top: 2px; }
+  .level-pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: #fff; }
+  .summary-title { font-size: 20px; margin-bottom: 4px; }
+  .summary-sub { color: var(--ink-soft); font-size: 13.5px; }
+
+  .sev-Critical { background: var(--critical); }
+  .sev-High { background: var(--high); }
+  .sev-Medium { background: var(--medium); }
+  .sev-Low { background: var(--low); }
+  .sev-Info { background: var(--info); }
+  .sev-Clean { background: var(--clean); }
+
+  .account-card { border: 1px solid var(--line); border-radius: 9px; padding: 16px 18px; margin-bottom: 12px; background: #fff; }
+  .account-card .head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .account-card .name { font-weight: 700; font-size: 14.5px; }
+  .account-card .email { color: var(--ink-soft); font-size: 12px; }
+  .account-card p { margin: 4px 0; font-size: 13.5px; }
+  .finding-row { border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 8px; }
+  .finding-row .tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 5px; color: #fff; display: inline-block; margin-bottom: 4px; }
+  .finding-row .code { font-family: monospace; font-size: 11px; color: var(--ink-soft); margin-left: 6px; }
+  .finding-row .evidence { font-family: monospace; font-size: 11.5px; color: var(--ink-soft); background: #f7f9f8; padding: 6px 10px; border-radius: 6px; margin-top: 6px; }
+  .finding-row .rec { font-size: 12.5px; color: var(--accent-dark); margin-top: 5px; }
+
+  .company-finding { border-left: 3px solid var(--line); padding: 10px 14px; margin-bottom: 10px; background: #fbfcfb; border-radius: 0 8px 8px 0; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-soft); }
+  .empty-state .big { font-size: 34px; margin-bottom: 6px; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: 12.5px; padding: 30px 0 50px; }
+  footer a { color: var(--accent-dark); font-weight: 600; }
+
+  .severity-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .severity-chip { font-size: 12px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); font-weight: 700; }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Identity &amp; Access Review</div>
+    <h1>AccessLens</h1>
+    <p class="lead">Paste or upload an access export and get a plain answer for the business, and full evidence for an analyst, from a single review that runs entirely on this page.</p>
+    <div class="privacy">Nothing you upload ever leaves your browser</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel">
+    <h2>1. Provide an access export</h2>
+    <div class="input-row">
+      <button class="primary" id="btnSample">Load sample company (issues found)</button>
+      <button id="btnClean">Load sample company (clean)</button>
+      <button id="btnUpload">Upload a CSV file</button>
+      <input type="file" id="fileInput" accept=".csv,text/csv">
+      <button class="ghost" id="btnClear">Clear</button>
+    </div>
+    <textarea id="csvInput" placeholder="Paste CSV content here, or use one of the buttons above"></textarea>
+    <div class="hint">Expected columns: <span class="cols">name, email, department, system, permission, date_granted, date_last_used, employee_status, manager</span></div>
+    <div class="input-row" style="margin-top:14px; margin-bottom:0;">
+      <button class="primary" id="btnAnalyze">Run review</button>
+      <span class="hint" id="rowCount" style="align-self:center;"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="resultsPanel" hidden>
+    <div class="modebar">
+      <h2 style="margin:0;">2. Results</h2>
+      <div class="toggle">
+        <button id="modeSimple" class="active">Simple</button>
+        <button id="modeAnalyst">Analyst</button>
+      </div>
+    </div>
+
+    <div class="score-row">
+      <div class="gauge" id="gauge">
+        <div class="gauge-inner">
+          <div class="num" id="gaugeNum">0</div>
+          <div class="of100">/ 100</div>
+        </div>
+      </div>
+      <div>
+        <div class="summary-title" id="summaryTitle">Overall access risk</div>
+        <div class="summary-sub" id="summarySub"></div>
+        <div class="severity-bar" id="severityBar"></div>
+      </div>
+    </div>
+
+    <div id="simpleView" style="margin-top:22px;"></div>
+    <div id="analystView" style="margin-top:22px;" hidden></div>
+  </section>
+
+  <section class="panel" id="emptyPanel">
+    <div class="empty-state">
+      <div class="big">No review run yet</div>
+      <p>Load a sample company above, or paste your own export, then press Run review.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Built and documented from scratch. Runs entirely client side, nothing is uploaded anywhere.<br>
+  <a href="https://github.com/ubaidraza5/accesslens" target="_blank" rel="noopener">Source code and full documentation on GitHub</a>
+</footer>
+
+<script id="accesslens-engine">
+/* ==========================================================================
+   AccessLens analysis engine, client side JavaScript port of the Python
+   package (access_parser.py, dormant_analyzer.py, privilege_analyzer.py,
+   sod_analyzer.py, ownership_analyzer.py, risk_scorer.py,
+   report_generator.py). The scoring rules and thresholds here are kept
+   identical to the Python version on purpose, so the two can never give a
+   different answer for the same access export.
+   ========================================================================== */
+
+const REQUIRED_COLUMNS = [
+  "name", "email", "department", "system", "permission",
+  "date_granted", "date_last_used", "employee_status", "manager",
+];
+
+const SEVERITY = {
+  INFO: { label: "Info", weight: 0, rank: 0 },
+  LOW: { label: "Low", weight: 2, rank: 1 },
+  MEDIUM: { label: "Medium", weight: 5, rank: 2 },
+  HIGH: { label: "High", weight: 10, rank: 3 },
+  CRITICAL: { label: "Critical", weight: 20, rank: 4 },
+};
+
+const DORMANT_DAYS_THRESHOLD = 90;
+const NEVER_USED_GRACE_DAYS = 30;
+const ADMIN_CONCENTRATION_THRESHOLD = 0.30;
+const MIN_GROUP_SIZE_FOR_OUTLIER_CHECK = 3;
+const STALE_REVIEW_DAYS = 365;
+
+const COMPANY_THRESHOLDS = [[60, "Critical"], [35, "High"], [15, "Medium"], [1, "Low"]];
+const ACCOUNT_THRESHOLDS = [[20, "Critical"], [10, "High"], [5, "Medium"], [1, "Low"]];
+const LEVEL_ORDER = ["Clean", "Low", "Medium", "High", "Critical"];
+const COMPANY_FLOOR_FOR_SEVERITY = { Critical: "High", High: "Medium" };
+
+const CONFLICTING_PERMISSION_PAIRS = [
+  ["Payment Processor", "Payment Approver"],
+  ["Invoice Creator", "Invoice Approver"],
+  ["Vendor Setup", "Payment Approver"],
+  ["User Provisioner", "Access Approver"],
+  ["Code Deploy", "Code Review Approver"],
+  ["Payroll Processor", "Payroll Approver"],
+  ["Purchase Requester", "Purchase Approver"],
+];
+
+/* ---------------------------- CSV parsing ------------------------------ */
+
+function splitCSVLine(line) {
+  const out = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        cur += c;
+      }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ",") { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseDate(value) {
+  value = (value || "").trim();
+  if (!value) return null;
+  let m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  m = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) {
+    const day = +m[1], month = +m[2];
+    if (day > 12) return new Date(Date.UTC(+m[3], month - 1, day));
+    return new Date(Date.UTC(+m[3], day - 1, month));
+  }
+  return null;
+}
+
+function daysBetween(from, to) {
+  if (!from || !to) return null;
+  return Math.round((to.getTime() - from.getTime()) / 86400000);
+}
+
+function isPrivilegedPermission(permission) {
+  const p = (permission || "").toLowerCase();
+  return ["admin", "owner", "root", "superuser", "full control"].some((k) => p.includes(k));
+}
+
+function isTerminatedStatus(status) {
+  return (status || "").trim().toLowerCase() === "terminated";
+}
+
+class ParseError extends Error {}
+
+function parseAccessCSV(text) {
+  const rawLines = text.replace(/\r\n/g, "\n").split("\n").filter((l) => l.trim() !== "");
+  if (rawLines.length === 0) throw new ParseError("The file is empty.");
+
+  const header = splitCSVLine(rawLines[0]).map((h) => h.trim());
+  const missing = REQUIRED_COLUMNS.filter((c) => !header.includes(c));
+  if (missing.length) {
+    throw new ParseError(
+      "The file is missing required columns: " + missing.join(", ") +
+      ". Expected columns are: " + REQUIRED_COLUMNS.join(", ")
+    );
+  }
+
+  const records = [];
+  for (let i = 1; i < rawLines.length; i++) {
+    const cells = splitCSVLine(rawLines[i]);
+    const row = {};
+    header.forEach((col, idx) => { row[col] = (cells[idx] || "").trim(); });
+
+    const dateGranted = row.date_granted ? parseDate(row.date_granted) : null;
+    const dateLastUsed = row.date_last_used ? parseDate(row.date_last_used) : null;
+
+    records.push({
+      rowNumber: i + 1,
+      name: row.name || "",
+      email: row.email || "",
+      department: row.department || "",
+      system: row.system || "",
+      permission: row.permission || "",
+      dateGranted,
+      dateLastUsed,
+      employeeStatus: row.employee_status || "",
+      manager: row.manager || "",
+      isTerminated: isTerminatedStatus(row.employee_status),
+      isPrivileged: isPrivilegedPermission(row.permission),
+    });
+  }
+
+  if (records.length === 0) throw new ParseError("The file has no access records in it.");
+  return records;
+}
+
+/* ------------------------------ Findings ------------------------------- */
+
+function finding(code, severityKey, message, subject, evidence, recommendation) {
+  return {
+    code,
+    severity: severityKey,
+    severityLabel: SEVERITY[severityKey].label,
+    severityRank: SEVERITY[severityKey].rank,
+    message,
+    subject: subject || null,
+    evidence: evidence || {},
+    recommendation: recommendation || "",
+  };
+}
+
+/* ----------------------------- Analyzers -------------------------------- */
+
+function analyzeDormant(records, asOf) {
+  const findings = [];
+  for (const r of records) {
+    if (r.isTerminated) {
+      findings.push(finding(
+        "ORPHANED_TERMINATED_ACCESS",
+        r.isPrivileged ? "CRITICAL" : "HIGH",
+        `${r.name || r.email} is marked as terminated but still has ${r.permission} access to ${r.system}.`,
+        r.email,
+        {
+          system: r.system,
+          permission: r.permission,
+          employee_status: r.employeeStatus,
+          date_last_used: r.dateLastUsed ? r.dateLastUsed.toISOString().slice(0, 10) : "never",
+        },
+        `Remove ${r.system} access for ${r.name || r.email} immediately, this account belongs to someone who no longer works here.`
+      ));
+      continue;
+    }
+
+    const daysUnused = daysBetween(r.dateLastUsed, asOf);
+    if (daysUnused !== null && daysUnused >= DORMANT_DAYS_THRESHOLD) {
+      findings.push(finding(
+        "DORMANT_ACCOUNT",
+        r.isPrivileged ? "HIGH" : "MEDIUM",
+        `${r.name || r.email} has not used ${r.system} in ${daysUnused} days.`,
+        r.email,
+        {
+          system: r.system,
+          permission: r.permission,
+          date_last_used: r.dateLastUsed.toISOString().slice(0, 10),
+          days_unused: daysUnused,
+        },
+        `Confirm with ${r.manager || "the manager on file"} whether ${r.name || r.email} still needs ${r.system}, and remove the access if not.`
+      ));
+      continue;
+    }
+
+    if (!r.dateLastUsed) {
+      const daysSinceGrant = daysBetween(r.dateGranted, asOf);
+      if (daysSinceGrant !== null && daysSinceGrant >= NEVER_USED_GRACE_DAYS) {
+        findings.push(finding(
+          "NEVER_USED_ACCOUNT",
+          "MEDIUM",
+          `${r.name || r.email} was granted ${r.permission} on ${r.system} ${daysSinceGrant} days ago and has never used it.`,
+          r.email,
+          {
+            system: r.system,
+            permission: r.permission,
+            date_granted: r.dateGranted.toISOString().slice(0, 10),
+            days_since_grant: daysSinceGrant,
+          },
+          `Check whether ${r.name || r.email} still needs this access, an account nobody has ever used is a common sign of an unnecessary grant.`
+        ));
+      }
+    }
+  }
+  return findings;
+}
+
+function analyzePrivilege(records) {
+  const findings = [];
+  const active = records.filter((r) => !r.isTerminated);
+
+  const byGroup = new Map();
+  for (const r of active) {
+    const key = r.department + " :: " + r.system;
+    if (!byGroup.has(key)) byGroup.set(key, []);
+    byGroup.get(key).push(r);
+  }
+  for (const [key, members] of byGroup) {
+    if (members.length < MIN_GROUP_SIZE_FOR_OUTLIER_CHECK) continue;
+    const privileged = members.filter((m) => m.isPrivileged);
+    const standard = members.filter((m) => !m.isPrivileged);
+    if (privileged.length === 1 && standard.length > 0) {
+      const [department, system] = key.split(" :: ");
+      const outlier = privileged[0];
+      findings.push(finding(
+        "PRIVILEGE_OUTLIER",
+        "HIGH",
+        `${outlier.name || outlier.email} is the only person in ${department} with ${outlier.permission} on ${system}, everyone else on the team has standard access.`,
+        outlier.email,
+        { department, system, permission: outlier.permission, peer_count: standard.length },
+        `Ask ${outlier.manager || "the manager on file"} to confirm this elevated access is still needed, or reduce it to match the rest of the team.`
+      ));
+    }
+  }
+
+  const bySystem = new Map();
+  for (const r of active) {
+    if (!bySystem.has(r.system)) bySystem.set(r.system, []);
+    bySystem.get(r.system).push(r);
+  }
+  for (const [system, members] of bySystem) {
+    if (members.length < MIN_GROUP_SIZE_FOR_OUTLIER_CHECK) continue;
+    const privileged = members.filter((m) => m.isPrivileged);
+    const share = privileged.length / members.length;
+    if (share >= ADMIN_CONCENTRATION_THRESHOLD) {
+      findings.push(finding(
+        "ADMIN_CONCENTRATION",
+        "HIGH",
+        `${privileged.length} of ${members.length} people with access to ${system} hold admin level permission, that is ${Math.round(share * 100)} percent of everyone with access.`,
+        null,
+        {
+          system,
+          privileged_count: privileged.length,
+          total_count: members.length,
+          privileged_users: privileged.map((p) => p.email),
+        },
+        `Review admin access to ${system} as a group and confirm each person still needs full rights rather than a lower level role.`
+      ));
+    }
+  }
+
+  return findings;
+}
+
+function analyzeSoD(records) {
+  const findings = [];
+  const active = records.filter((r) => !r.isTerminated);
+
+  const byPerson = new Map();
+  for (const r of active) {
+    if (!byPerson.has(r.email)) byPerson.set(r.email, []);
+    byPerson.get(r.email).push(r);
+  }
+
+  function conflictPairFor(a, b) {
+    const al = a.trim().toLowerCase(), bl = b.trim().toLowerCase();
+    for (const [left, right] of CONFLICTING_PERMISSION_PAIRS) {
+      const ll = left.toLowerCase(), rl = right.toLowerCase();
+      if ((ll === al && rl === bl) || (ll === bl && rl === al)) return [left, right];
+    }
+    return null;
+  }
+
+  for (const [email, personRecords] of byPerson) {
+    const permissions = [...new Set(personRecords.map((r) => r.permission))];
+    if (permissions.length < 2) continue;
+    for (let i = 0; i < permissions.length; i++) {
+      for (let j = i + 1; j < permissions.length; j++) {
+        const pair = conflictPairFor(permissions[i], permissions[j]);
+        if (!pair) continue;
+        const [permA, permB] = pair;
+        const name = personRecords[0].name || email;
+        const systems = [...new Set(personRecords
+          .filter((r) => r.permission === permA || r.permission === permB)
+          .map((r) => r.system))].sort();
+        findings.push(finding(
+          "SOD_CONFLICT",
+          "CRITICAL",
+          `${name} holds both ${permA} and ${permB}, one person should not be able to both create and approve the same kind of action.`,
+          email,
+          { permission_a: permA, permission_b: permB, systems },
+          `Remove one side of this pairing from ${name}, or add a compensating control such as a second approver, so the same person cannot do both steps.`
+        ));
+      }
+    }
+  }
+
+  return findings;
+}
+
+function analyzeOwnership(records, asOf) {
+  const findings = [];
+  for (const r of records) {
+    if (r.isTerminated) continue;
+
+    if (!r.manager) {
+      findings.push(finding(
+        "NO_MANAGER_LISTED",
+        "MEDIUM",
+        `${r.name || r.email} has ${r.permission} access to ${r.system} with no manager listed to approve or review it.`,
+        r.email,
+        { system: r.system, permission: r.permission },
+        "Assign an owner for this account so it can be included in the next access review."
+      ));
+    }
+
+    const daysSinceGrant = daysBetween(r.dateGranted, asOf);
+    if (daysSinceGrant !== null && daysSinceGrant >= STALE_REVIEW_DAYS) {
+      findings.push(finding(
+        "RECERTIFICATION_OVERDUE",
+        "LOW",
+        `${r.name || r.email}'s ${r.permission} access to ${r.system} was granted ${daysSinceGrant} days ago and does not appear to have been reviewed since.`,
+        r.email,
+        {
+          system: r.system,
+          permission: r.permission,
+          date_granted: r.dateGranted.toISOString().slice(0, 10),
+          days_since_grant: daysSinceGrant,
+        },
+        "Include this access in the next recertification cycle, most frameworks expect a review at least once a year."
+      ));
+    }
+  }
+  return findings;
+}
+
+/* ---------------------------- Risk scoring ------------------------------ */
+
+function levelFor(score, thresholds) {
+  for (const [cutoff, label] of thresholds) if (score >= cutoff) return label;
+  return "Clean";
+}
+
+function moreSevere(a, b) {
+  return LEVEL_ORDER.indexOf(a) >= LEVEL_ORDER.indexOf(b) ? a : b;
+}
+
+function scoreFindings(findings, recordNames) {
+  recordNames = recordNames || {};
+
+  const rawCompanyScore = findings.reduce((sum, f) => sum + SEVERITY[f.severity].weight, 0);
+  const companyScore = Math.min(100, rawCompanyScore);
+  let companyLevel = levelFor(companyScore, COMPANY_THRESHOLDS);
+  for (const f of findings) {
+    const floor = COMPANY_FLOOR_FOR_SEVERITY[f.severityLabel];
+    if (floor) companyLevel = moreSevere(companyLevel, floor);
+  }
+
+  const bySeverity = {};
+  for (const f of findings) bySeverity[f.severityLabel] = (bySeverity[f.severityLabel] || 0) + 1;
+
+  const bySubject = new Map();
+  for (const f of findings) {
+    if (!f.subject) continue;
+    if (!bySubject.has(f.subject)) bySubject.set(f.subject, []);
+    bySubject.get(f.subject).push(f);
+  }
+
+  const accounts = [];
+  for (const [subject, subjectFindings] of bySubject) {
+    const raw = subjectFindings.reduce((sum, f) => sum + SEVERITY[f.severity].weight, 0);
+    const score = Math.min(100, raw);
+    const level = levelFor(score, ACCOUNT_THRESHOLDS);
+    accounts.push({
+      subject,
+      name: recordNames[subject] || subject,
+      score,
+      level,
+      findings: [...subjectFindings].sort((a, b) => b.severityRank - a.severityRank),
+    });
+  }
+  accounts.sort((a, b) => b.score - a.score);
+
+  return {
+    companyScore,
+    companyLevel,
+    totalFindings: findings.length,
+    findingsBySeverity: bySeverity,
+    findings: [...findings].sort((a, b) => b.severityRank - a.severityRank),
+    accounts,
+  };
+}
+
+function runFullReview(records, asOf) {
+  const findings = [
+    ...analyzeDormant(records, asOf),
+    ...analyzePrivilege(records),
+    ...analyzeSoD(records),
+    ...analyzeOwnership(records, asOf),
+  ];
+  const recordNames = {};
+  for (const r of records) recordNames[r.email] = r.name || r.email;
+  return scoreFindings(findings, recordNames);
+}
+
+/* Expose the engine for the Node.js parity checker used in CI. This line
+   does nothing in a browser, module is simply undefined there. */
+if (typeof module !== "undefined") {
+  module.exports = {
+    parseAccessCSV, analyzeDormant, analyzePrivilege, analyzeSoD,
+    analyzeOwnership, scoreFindings, runFullReview, ParseError,
+  };
+}
+</script>
+
+<script id="accesslens-ui">
+/* ------------------------------ UI wiring -------------------------------- */
+
+const SAMPLE_AS_OF = new Date(Date.UTC(2026, 8, 9)); // fixed date the built in samples were written against
+
+const SAMPLE_CSV = `name,email,department,system,permission,date_granted,date_last_used,employee_status,manager
+Priya Chandra,priya.chandra@alderbrooklogistics.com,Finance,Finance ERP,Standard User,2025-03-10,2026-08-30,Active,Helen Ostrowski
+Marcus Webb,marcus.webb@alderbrooklogistics.com,Finance,Finance ERP,Payment Processor,2025-01-20,2026-09-01,Active,Helen Ostrowski
+Marcus Webb,marcus.webb@alderbrooklogistics.com,Finance,Finance ERP,Payment Approver,2025-06-15,2026-08-20,Active,Helen Ostrowski
+Helen Ostrowski,helen.ostrowski@alderbrooklogistics.com,Finance,Finance ERP,Admin,2024-11-01,2026-09-05,Active,David Okafor
+Grace Fenwick,grace.fenwick@alderbrooklogistics.com,Finance,Finance ERP,Admin,2023-05-01,2026-06-15,Terminated,Helen Ostrowski
+Tomasz Nowak,tomasz.nowak@alderbrooklogistics.com,Finance,Finance ERP,Standard User,2025-08-01,2026-08-25,Active,Helen Ostrowski
+Fatima Rahman,fatima.rahman@alderbrooklogistics.com,Finance,Finance ERP,Invoice Creator,2025-02-10,2026-08-15,Active,Helen Ostrowski
+Fatima Rahman,fatima.rahman@alderbrooklogistics.com,Finance,Finance ERP,Invoice Approver,2025-02-10,2026-08-15,Active,Helen Ostrowski
+Sam Okonkwo,sam.okonkwo@alderbrooklogistics.com,IT,AWS Console,Admin,2024-02-01,2026-09-08,Active,Ravi Patel
+Lena Brooks,lena.brooks@alderbrooklogistics.com,IT,AWS Console,Admin,2024-05-01,2026-09-07,Active,Ravi Patel
+Ravi Patel,ravi.patel@alderbrooklogistics.com,IT,AWS Console,Admin,2023-09-01,2026-09-09,Active,David Okafor
+Owen Sinclair,owen.sinclair@alderbrooklogistics.com,IT,AWS Console,Admin,2025-01-10,2026-09-06,Active,Ravi Patel
+Chidinma Eze,chidinma.eze@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-03-01,2026-09-01,Active,Ravi Patel
+Yusuf Demir,yusuf.demir@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-04-01,2026-08-30,Active,Ravi Patel
+Anastasia Volkov,anastasia.volkov@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-05-01,2026-08-28,Active,Ravi Patel
+Noah Fischer,noah.fischer@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-06-01,2026-02-01,Active,Ravi Patel
+Ines Duarte,ines.duarte@alderbrooklogistics.com,IT,AWS Console,Standard User,2026-06-01,,Active,Ravi Patel
+Petra Vogel,petra.vogel@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-08-01,2026-08-10,Active,Ravi Patel
+Diego Ramirez,diego.ramirez@alderbrooklogistics.com,HR,HR System,Standard User,2025-04-15,2026-08-01,Active,
+Sophie Laurent,sophie.laurent@alderbrooklogistics.com,HR,HR System,Admin,2024-03-01,2026-09-04,Active,David Okafor
+Aaliyah Johnson,aaliyah.johnson@alderbrooklogistics.com,HR,HR System,Standard User,2025-04-01,2026-08-20,Active,Sophie Laurent
+Chloe Bennett,chloe.bennett@alderbrooklogistics.com,Sales,CRM,Standard User,2025-02-01,2026-08-25,Active,Omar Siddiqui
+Liam Foster,liam.foster@alderbrooklogistics.com,Sales,CRM,Standard User,2025-03-01,2026-08-20,Active,Omar Siddiqui
+Zara Malik,zara.malik@alderbrooklogistics.com,Sales,CRM,Admin,2025-01-01,2026-09-01,Active,Omar Siddiqui
+Ahmed Al-Farsi,ahmed.alfarsi@alderbrooklogistics.com,HR,Payroll System,Payroll Processor,2025-05-01,2026-08-28,Active,Sophie Laurent
+Ahmed Al-Farsi,ahmed.alfarsi@alderbrooklogistics.com,HR,Payroll System,Payroll Approver,2025-05-01,2026-08-28,Active,Sophie Laurent
+Jonas Berg,jonas.berg@alderbrooklogistics.com,Engineering,Code Repository,Code Deploy,2025-06-01,2026-09-02,Active,Nina Kowalski
+Jonas Berg,jonas.berg@alderbrooklogistics.com,Engineering,Code Repository,Code Review Approver,2025-06-01,2026-09-02,Active,Nina Kowalski
+Nina Kowalski,nina.kowalski@alderbrooklogistics.com,Engineering,Code Repository,Admin,2024-08-01,2026-09-05,Active,David Okafor
+Elif Sahin,elif.sahin@alderbrooklogistics.com,Engineering,Code Repository,Standard User,2025-07-01,2026-08-30,Active,Nina Kowalski
+Marco Silva,marco.silva@alderbrooklogistics.com,Engineering,Code Repository,Standard User,2025-08-01,2026-08-25,Active,Nina Kowalski
+Priya Chandra,priya.chandra@alderbrooklogistics.com,Finance,Email System,Standard User,2025-01-01,2026-09-08,Active,Helen Ostrowski
+Sam Okonkwo,sam.okonkwo@alderbrooklogistics.com,IT,Email System,Standard User,2024-01-01,2026-09-08,Active,Ravi Patel
+`;
+
+const CLEAN_CSV = `name,email,department,system,permission,date_granted,date_last_used,employee_status,manager
+Lucia Fernandez,lucia.fernandez@brightfieldanalytics.com,Finance,Finance ERP,Standard User,2026-02-01,2026-08-20,Active,Priya Kapoor
+Priya Kapoor,priya.kapoor@brightfieldanalytics.com,Finance,Finance ERP,Admin,2026-01-15,2026-09-01,Active,Owen Clarke
+Owen Clarke,owen.clarke@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-03-01,2026-08-25,Active,Maria Costa
+Maria Costa,maria.costa@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-02-10,2026-08-28,Active,Diego Santos
+Diego Santos,diego.santos@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-02-15,2026-08-30,Active,Owen Clarke
+Hana Suzuki,hana.suzuki@brightfieldanalytics.com,HR,HR System,Standard User,2026-03-10,2026-08-22,Active,Priya Kapoor
+Karim Haddad,karim.haddad@brightfieldanalytics.com,Sales,CRM,Standard User,2026-04-01,2026-08-18,Active,Owen Clarke
+Freya Larsen,freya.larsen@brightfieldanalytics.com,Sales,CRM,Standard User,2026-04-05,2026-08-19,Active,Owen Clarke
+Noor Aziz,noor.aziz@brightfieldanalytics.com,Engineering,Code Repository,Standard User,2026-03-20,2026-08-27,Active,Maria Costa
+Theo Bennett,theo.bennett@brightfieldanalytics.com,Engineering,Code Repository,Code Deploy,2026-02-25,2026-08-29,Active,Maria Costa
+`;
+
+const el = (id) => document.getElementById(id);
+const csvInput = el("csvInput");
+const rowCount = el("rowCount");
+const resultsPanel = el("resultsPanel");
+const emptyPanel = el("emptyPanel");
+
+let currentMode = "simple";
+let usingSampleData = false;
+
+function countDataRows(text) {
+  return text.split(/\r?\n/).filter((l) => l.trim() !== "").length - 1;
+}
+
+function updateRowCount() {
+  const n = countDataRows(csvInput.value || "");
+  rowCount.textContent = n > 0 ? `${n} record(s) ready to review` : "";
+}
+
+el("btnSample").addEventListener("click", () => {
+  csvInput.value = SAMPLE_CSV.trim() + "\n";
+  usingSampleData = true;
+  updateRowCount();
+});
+el("btnClean").addEventListener("click", () => {
+  csvInput.value = CLEAN_CSV.trim() + "\n";
+  usingSampleData = true;
+  updateRowCount();
+});
+el("btnClear").addEventListener("click", () => {
+  csvInput.value = "";
+  usingSampleData = false;
+  updateRowCount();
+  resultsPanel.hidden = true;
+  emptyPanel.hidden = false;
+});
+el("btnUpload").addEventListener("click", () => el("fileInput").click());
+el("fileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    csvInput.value = reader.result;
+    usingSampleData = false;
+    updateRowCount();
+  };
+  reader.readAsText(file);
+});
+csvInput.addEventListener("input", () => {
+  usingSampleData = false;
+  updateRowCount();
+});
+
+el("modeSimple").addEventListener("click", () => setMode("simple"));
+el("modeAnalyst").addEventListener("click", () => setMode("analyst"));
+
+function setMode(mode) {
+  currentMode = mode;
+  el("modeSimple").classList.toggle("active", mode === "simple");
+  el("modeAnalyst").classList.toggle("active", mode === "analyst");
+  el("simpleView").hidden = mode !== "simple";
+  el("analystView").hidden = mode !== "analyst";
+}
+
+function severityColorVar(label) {
+  return `sev-${label}`;
+}
+
+function gaugeColor(level) {
+  const map = {
+    Critical: "var(--critical)", High: "var(--high)", Medium: "var(--medium)",
+    Low: "var(--low)", Clean: "var(--clean)",
+  };
+  return map[level] || "var(--low)";
+}
+
+function renderSummary(report) {
+  const gauge = el("gauge");
+  gauge.style.background = `conic-gradient(${gaugeColor(report.companyLevel)} ${report.companyScore * 3.6}deg, #e7ece9 0deg)`;
+  el("gaugeNum").textContent = report.companyScore;
+  el("gaugeNum").style.color = gaugeColor(report.companyLevel);
+
+  el("summaryTitle").innerHTML =
+    `Overall access risk: <span class="level-pill ${severityColorVar(report.companyLevel)}">${report.companyLevel.toUpperCase()}</span>`;
+  el("summarySub").textContent =
+    report.totalFindings === 0
+      ? "No significant access issues were found in this export."
+      : `${report.totalFindings} finding(s) across ${report.accounts.length} account(s).`;
+
+  const bar = el("severityBar");
+  bar.innerHTML = "";
+  ["Critical", "High", "Medium", "Low"].forEach((label) => {
+    const count = report.findingsBySeverity[label];
+    if (!count) return;
+    const chip = document.createElement("span");
+    chip.className = "severity-chip";
+    chip.textContent = `${label}: ${count}`;
+    bar.appendChild(chip);
+  });
+}
+
+function renderSimpleView(report, companyName) {
+  const container = el("simpleView");
+  container.innerHTML = "";
+
+  if (report.totalFindings === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="big">Looks well managed</div><p>${companyName} has no significant access issues in this export.</p></div>`;
+    return;
+  }
+
+  const topAccounts = report.accounts.filter((a) => a.level === "Critical" || a.level === "High").slice(0, 6);
+
+  const intro = document.createElement("p");
+  intro.style.fontSize = "14.5px";
+  intro.textContent = `${companyName} was reviewed against common access risks. Here is what needs attention, in plain terms.`;
+  container.appendChild(intro);
+
+  topAccounts.forEach((a) => {
+    const worst = a.findings[0];
+    const card = document.createElement("div");
+    card.className = "account-card";
+    card.innerHTML = `
+      <div class="head">
+        <span class="name">${a.name}</span>
+        <span class="level-pill ${severityColorVar(a.level)}">${a.level} risk</span>
+      </div>
+      <p>${worst.message}</p>
+    `;
+    container.appendChild(card);
+  });
+
+  const counts = report.findingsBySeverity;
+  const notes = document.createElement("div");
+  notes.className = "account-card";
+  let html = "<p><strong>What this means:</strong></p>";
+  if (counts.Critical) html += `<p>${counts.Critical} issue(s) need action right away, such as access left behind after someone left the company, or one person able to both request and approve the same action.</p>`;
+  if (counts.High) html += `<p>${counts.High} issue(s) are high priority, mostly unused accounts and admin access that stands out compared to the rest of a team.</p>`;
+  const remainder = (counts.Medium || 0) + (counts.Low || 0);
+  if (remainder) html += `<p>${remainder} smaller issue(s) are worth cleaning up but are not urgent.</p>`;
+  notes.innerHTML = html;
+  container.appendChild(notes);
+}
+
+function renderAnalystView(report) {
+  const container = el("analystView");
+  container.innerHTML = "";
+
+  if (report.accounts.length === 0 && report.totalFindings === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="big">No findings</div><p>Every account in this export passed every check.</p></div>`;
+    return;
+  }
+
+  report.accounts.forEach((a) => {
+    const card = document.createElement("div");
+    card.className = "account-card";
+    let html = `
+      <div class="head">
+        <span class="name">${a.name} <span class="email">&lt;${a.subject}&gt;</span></span>
+        <span class="level-pill ${severityColorVar(a.level)}">${a.level}, score ${a.score}</span>
+      </div>
+    `;
+    a.findings.forEach((f) => {
+      html += `
+        <div class="finding-row">
+          <span class="tag ${severityColorVar(f.severityLabel)}">${f.severityLabel}</span>
+          <span class="code">${f.code}</span>
+          <p style="margin:4px 0;">${f.message}</p>
+          <div class="evidence">${Object.entries(f.evidence).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("<br>")}</div>
+          ${f.recommendation ? `<div class="rec">Recommendation: ${f.recommendation}</div>` : ""}
+        </div>
+      `;
+    });
+    card.innerHTML = html;
+    container.appendChild(card);
+  });
+
+  const companyWide = report.findings.filter((f) => !f.subject);
+  if (companyWide.length) {
+    const heading = document.createElement("h3");
+    heading.textContent = "Company wide findings";
+    heading.style.margin = "20px 0 10px";
+    heading.style.fontSize = "16px";
+    container.appendChild(heading);
+    companyWide.forEach((f) => {
+      const div = document.createElement("div");
+      div.className = "company-finding";
+      div.style.borderLeftColor = gaugeColor(f.severityLabel === "Critical" ? "Critical" : f.severityLabel);
+      div.innerHTML = `
+        <span class="tag ${severityColorVar(f.severityLabel)}">${f.severityLabel}</span>
+        <span class="code">${f.code}</span>
+        <p style="margin:4px 0;">${f.message}</p>
+        <div class="evidence">${Object.entries(f.evidence).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("<br>")}</div>
+        ${f.recommendation ? `<div class="rec">Recommendation: ${f.recommendation}</div>` : ""}
+      `;
+      container.appendChild(div);
+    });
+  }
+}
+
+el("btnAnalyze").addEventListener("click", () => {
+  const text = csvInput.value.trim();
+  if (!text) {
+    alert("Paste or upload an access export first.");
+    return;
+  }
+  try {
+    const records = parseAccessCSV(text);
+    const asOf = usingSampleData ? SAMPLE_AS_OF : new Date();
+    const report = runFullReview(records, asOf);
+    const companyName = usingSampleData
+      ? (text.includes("alderbrooklogistics") ? "Alderbrook Logistics" : "Brightfield Analytics")
+      : "This company";
+
+    resultsPanel.hidden = false;
+    emptyPanel.hidden = true;
+    renderSummary(report);
+    renderSimpleView(report, companyName);
+    renderAnalystView(report);
+    setMode(currentMode);
+  } catch (err) {
+    alert(err.message || "Could not read that file, check the columns and try again.");
+  }
+});
+
+updateRowCount();
+</script>
+
+</body>
+</html>
