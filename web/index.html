@@ -250,6 +250,26 @@ const REQUIRED_COLUMNS = [
   "date_granted", "date_last_used", "employee_status", "manager",
 ];
 
+// Alternate header names accepted for each required column, in addition
+// to the canonical name itself. Matching ignores case and treats spaces,
+// underscores, and hyphens as the same character, kept identical to the
+// alias table in access_parser.py so the two engines never disagree on
+// which files are acceptable.
+const COLUMN_ALIASES = {
+  name: ["full name", "employee name", "user name", "display name"],
+  email: ["email address", "e mail", "user email", "login email"],
+  department: ["dept", "team", "business unit", "division"],
+  system: ["application", "app", "resource", "platform", "system name", "app name"],
+  permission: ["role", "access level", "permission level", "entitlement", "access role"],
+  date_granted: ["grant date", "granted date", "access granted date", "date access granted"],
+  date_last_used: ["last used", "last login", "last activity", "last access", "last used date"],
+  employee_status: ["status", "account status", "user status"],
+  manager: ["manager name", "supervisor", "reports to"],
+};
+
+const FIRST_NAME_ALIASES = ["first name", "first", "given name"];
+const LAST_NAME_ALIASES = ["last name", "last", "surname", "family name"];
+
 const SEVERITY = {
   INFO: { label: "Info", weight: 0, rank: 0 },
   LOW: { label: "Low", weight: 2, rank: 1 },
@@ -334,12 +354,47 @@ function isTerminatedStatus(status) {
 
 class ParseError extends Error {}
 
+function normalizeHeader(header) {
+  return header.trim().toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function resolveColumns(header) {
+  const byNormalized = {};
+  header.forEach((field) => {
+    const key = normalizeHeader(field);
+    if (!(key in byNormalized)) byNormalized[key] = field;
+  });
+
+  const resolved = {};
+  for (const canonical of REQUIRED_COLUMNS) {
+    const candidates = [canonical.replace(/_/g, " ")].concat(COLUMN_ALIASES[canonical] || []);
+    for (const candidate of candidates) {
+      if (candidate in byNormalized) {
+        resolved[canonical] = byNormalized[candidate];
+        break;
+      }
+    }
+  }
+
+  let nameParts = null;
+  if (!("name" in resolved)) {
+    const firstCol = FIRST_NAME_ALIASES.map((a) => byNormalized[a]).find((v) => v);
+    const lastCol = LAST_NAME_ALIASES.map((a) => byNormalized[a]).find((v) => v);
+    if (firstCol && lastCol) nameParts = [firstCol, lastCol];
+  }
+
+  return { resolved, nameParts };
+}
+
 function parseAccessCSV(text) {
   const rawLines = text.replace(/\r\n/g, "\n").split("\n").filter((l) => l.trim() !== "");
   if (rawLines.length === 0) throw new ParseError("The file is empty.");
 
   const header = splitCSVLine(rawLines[0]).map((h) => h.trim());
-  const missing = REQUIRED_COLUMNS.filter((c) => !header.includes(c));
+  const { resolved, nameParts } = resolveColumns(header);
+  const missing = REQUIRED_COLUMNS.filter(
+    (c) => !(c in resolved) && !(c === "name" && nameParts)
+  );
   if (missing.length) {
     throw new ParseError(
       "The file is missing required columns: " + missing.join(", ") +
@@ -353,22 +408,29 @@ function parseAccessCSV(text) {
     const row = {};
     header.forEach((col, idx) => { row[col] = (cells[idx] || "").trim(); });
 
-    const dateGranted = row.date_granted ? parseDate(row.date_granted) : null;
-    const dateLastUsed = row.date_last_used ? parseDate(row.date_last_used) : null;
+    const name = nameParts
+      ? `${row[nameParts[0]] || ""} ${row[nameParts[1]] || ""}`.trim()
+      : row[resolved.name] || "";
+    const dateGrantedRaw = row[resolved.date_granted] || "";
+    const dateLastUsedRaw = row[resolved.date_last_used] || "";
+    const dateGranted = dateGrantedRaw ? parseDate(dateGrantedRaw) : null;
+    const dateLastUsed = dateLastUsedRaw ? parseDate(dateLastUsedRaw) : null;
+    const permission = row[resolved.permission] || "";
+    const employeeStatus = row[resolved.employee_status] || "";
 
     records.push({
       rowNumber: i + 1,
-      name: row.name || "",
-      email: row.email || "",
-      department: row.department || "",
-      system: row.system || "",
-      permission: row.permission || "",
+      name,
+      email: row[resolved.email] || "",
+      department: row[resolved.department] || "",
+      system: row[resolved.system] || "",
+      permission,
       dateGranted,
       dateLastUsed,
-      employeeStatus: row.employee_status || "",
-      manager: row.manager || "",
-      isTerminated: isTerminatedStatus(row.employee_status),
-      isPrivileged: isPrivilegedPermission(row.permission),
+      employeeStatus,
+      manager: row[resolved.manager] || "",
+      isTerminated: isTerminatedStatus(employeeStatus),
+      isPrivileged: isPrivilegedPermission(permission),
     });
   }
 
