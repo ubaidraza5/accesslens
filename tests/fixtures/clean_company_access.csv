@@ -1,0 +1,11 @@
+name,email,department,system,permission,date_granted,date_last_used,employee_status,manager
+Lucia Fernandez,lucia.fernandez@brightfieldanalytics.com,Finance,Finance ERP,Standard User,2026-02-01,2026-08-20,Active,Priya Kapoor
+Priya Kapoor,priya.kapoor@brightfieldanalytics.com,Finance,Finance ERP,Admin,2026-01-15,2026-09-01,Active,Owen Clarke
+Owen Clarke,owen.clarke@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-03-01,2026-08-25,Active,Maria Costa
+Maria Costa,maria.costa@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-02-10,2026-08-28,Active,Diego Santos
+Diego Santos,diego.santos@brightfieldanalytics.com,IT,IT Helpdesk,Standard User,2026-02-15,2026-08-30,Active,Owen Clarke
+Hana Suzuki,hana.suzuki@brightfieldanalytics.com,HR,HR System,Standard User,2026-03-10,2026-08-22,Active,Priya Kapoor
+Karim Haddad,karim.haddad@brightfieldanalytics.com,Sales,CRM,Standard User,2026-04-01,2026-08-18,Active,Owen Clarke
+Freya Larsen,freya.larsen@brightfieldanalytics.com,Sales,CRM,Standard User,2026-04-05,2026-08-19,Active,Owen Clarke
+Noor Aziz,noor.aziz@brightfieldanalytics.com,Engineering,Code Repository,Standard User,2026-03-20,2026-08-27,Active,Maria Costa
+Theo Bennett,theo.bennett@brightfieldanalytics.com,Engineering,Code Repository,Code Deploy,2026-02-25,2026-08-29,Active,Maria Costa

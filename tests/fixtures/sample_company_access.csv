@@ -1,0 +1,34 @@
+name,email,department,system,permission,date_granted,date_last_used,employee_status,manager
+Priya Chandra,priya.chandra@alderbrooklogistics.com,Finance,Finance ERP,Standard User,2025-03-10,2026-08-30,Active,Helen Ostrowski
+Marcus Webb,marcus.webb@alderbrooklogistics.com,Finance,Finance ERP,Payment Processor,2025-01-20,2026-09-01,Active,Helen Ostrowski
+Marcus Webb,marcus.webb@alderbrooklogistics.com,Finance,Finance ERP,Payment Approver,2025-06-15,2026-08-20,Active,Helen Ostrowski
+Helen Ostrowski,helen.ostrowski@alderbrooklogistics.com,Finance,Finance ERP,Admin,2024-11-01,2026-09-05,Active,David Okafor
+Grace Fenwick,grace.fenwick@alderbrooklogistics.com,Finance,Finance ERP,Admin,2023-05-01,2026-06-15,Terminated,Helen Ostrowski
+Tomasz Nowak,tomasz.nowak@alderbrooklogistics.com,Finance,Finance ERP,Standard User,2025-08-01,2026-08-25,Active,Helen Ostrowski
+Fatima Rahman,fatima.rahman@alderbrooklogistics.com,Finance,Finance ERP,Invoice Creator,2025-02-10,2026-08-15,Active,Helen Ostrowski
+Fatima Rahman,fatima.rahman@alderbrooklogistics.com,Finance,Finance ERP,Invoice Approver,2025-02-10,2026-08-15,Active,Helen Ostrowski
+Sam Okonkwo,sam.okonkwo@alderbrooklogistics.com,IT,AWS Console,Admin,2024-02-01,2026-09-08,Active,Ravi Patel
+Lena Brooks,lena.brooks@alderbrooklogistics.com,IT,AWS Console,Admin,2024-05-01,2026-09-07,Active,Ravi Patel
+Ravi Patel,ravi.patel@alderbrooklogistics.com,IT,AWS Console,Admin,2023-09-01,2026-09-09,Active,David Okafor
+Owen Sinclair,owen.sinclair@alderbrooklogistics.com,IT,AWS Console,Admin,2025-01-10,2026-09-06,Active,Ravi Patel
+Chidinma Eze,chidinma.eze@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-03-01,2026-09-01,Active,Ravi Patel
+Yusuf Demir,yusuf.demir@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-04-01,2026-08-30,Active,Ravi Patel
+Anastasia Volkov,anastasia.volkov@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-05-01,2026-08-28,Active,Ravi Patel
+Noah Fischer,noah.fischer@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-06-01,2026-02-01,Active,Ravi Patel
+Ines Duarte,ines.duarte@alderbrooklogistics.com,IT,AWS Console,Standard User,2026-06-01,,Active,Ravi Patel
+Petra Vogel,petra.vogel@alderbrooklogistics.com,IT,AWS Console,Standard User,2025-08-01,2026-08-10,Active,Ravi Patel
+Diego Ramirez,diego.ramirez@alderbrooklogistics.com,HR,HR System,Standard User,2025-04-15,2026-08-01,Active,
+Sophie Laurent,sophie.laurent@alderbrooklogistics.com,HR,HR System,Admin,2024-03-01,2026-09-04,Active,David Okafor
+Aaliyah Johnson,aaliyah.johnson@alderbrooklogistics.com,HR,HR System,Standard User,2025-04-01,2026-08-20,Active,Sophie Laurent
+Chloe Bennett,chloe.bennett@alderbrooklogistics.com,Sales,CRM,Standard User,2025-02-01,2026-08-25,Active,Omar Siddiqui
+Liam Foster,liam.foster@alderbrooklogistics.com,Sales,CRM,Standard User,2025-03-01,2026-08-20,Active,Omar Siddiqui
+Zara Malik,zara.malik@alderbrooklogistics.com,Sales,CRM,Admin,2025-01-01,2026-09-01,Active,Omar Siddiqui
+Ahmed Al-Farsi,ahmed.alfarsi@alderbrooklogistics.com,HR,Payroll System,Payroll Processor,2025-05-01,2026-08-28,Active,Sophie Laurent
+Ahmed Al-Farsi,ahmed.alfarsi@alderbrooklogistics.com,HR,Payroll System,Payroll Approver,2025-05-01,2026-08-28,Active,Sophie Laurent
+Jonas Berg,jonas.berg@alderbrooklogistics.com,Engineering,Code Repository,Code Deploy,2025-06-01,2026-09-02,Active,Nina Kowalski
+Jonas Berg,jonas.berg@alderbrooklogistics.com,Engineering,Code Repository,Code Review Approver,2025-06-01,2026-09-02,Active,Nina Kowalski
+Nina Kowalski,nina.kowalski@alderbrooklogistics.com,Engineering,Code Repository,Admin,2024-08-01,2026-09-05,Active,David Okafor
+Elif Sahin,elif.sahin@alderbrooklogistics.com,Engineering,Code Repository,Standard User,2025-07-01,2026-08-30,Active,Nina Kowalski
+Marco Silva,marco.silva@alderbrooklogistics.com,Engineering,Code Repository,Standard User,2025-08-01,2026-08-25,Active,Nina Kowalski
+Priya Chandra,priya.chandra@alderbrooklogistics.com,Finance,Email System,Standard User,2025-01-01,2026-09-08,Active,Helen Ostrowski
+Sam Okonkwo,sam.okonkwo@alderbrooklogistics.com,IT,Email System,Standard User,2024-01-01,2026-09-08,Active,Ravi Patel
