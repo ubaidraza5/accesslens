@@ -29,17 +29,22 @@ jobs:
         run: pytest -v
 
       - name: CLI smoke test, simple mode
-        run: python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09
+        # A Critical result is expected to exit 1, that is the pass or
+        # fail gate the CLI is designed to provide, so this step expects
+        # a nonzero exit rather than treating it as a failure. The
+        # leading ! flips that expected failure into a passing step,
+        # and still fails the build if the CLI unexpectedly exits 0.
+        run: "! python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09"
 
       - name: CLI smoke test, analyst mode
-        run: python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --mode analyst
+        run: "! python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --mode analyst"
 
       - name: CLI smoke test, clean export
         run: python main.py tests/fixtures/clean_company_access.csv --as-of 2026-09-09
 
       - name: CLI smoke test, JSON export
         run: |
-          python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --json /tmp/report.json
+          ! python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --json /tmp/report.json
           python -c "import json; d = json.load(open('/tmp/report.json')); assert d['company_level'] == 'Critical', d"
 
   verify-web-demo:
