@@ -141,6 +141,67 @@ def test_days_since_granted(tmp_path):
     assert records[0].days_since_granted(date(2026, 2, 1)) == 31
 
 
+def test_alternate_column_names_are_accepted(tmp_path):
+    p = tmp_path / "alt_headers.csv"
+    p.write_text(
+        "Full Name,Email Address,Dept,Application,Role,Grant Date,"
+        "Last Login,Status,Manager Name\n"
+        "Alice Chen,alice.chen@example.com,Finance,Finance ERP,Admin,"
+        "2025-01-01,2026-08-01,Active,Test Manager\n"
+    )
+    records = parse_access_file(str(p))
+    assert len(records) == 1
+    r = records[0]
+    assert r.name == "Alice Chen"
+    assert r.email == "alice.chen@example.com"
+    assert r.department == "Finance"
+    assert r.system == "Finance ERP"
+    assert r.permission == "Admin"
+    assert r.date_granted == date(2025, 1, 1)
+    assert r.date_last_used == date(2026, 8, 1)
+    assert r.employee_status == "Active"
+    assert r.manager == "Test Manager"
+
+
+def test_alternate_column_matching_ignores_case_and_separators(tmp_path):
+    p = tmp_path / "alt_case.csv"
+    p.write_text(
+        "NAME,EMAIL,DEPARTMENT,SYSTEM,PERMISSION,DATE-GRANTED,"
+        "DATE_LAST_USED,Employee-Status,MANAGER\n"
+        "Bob Diaz,bob@example.com,IT,Console,Standard User,"
+        "2025-02-01,,Active,Test Manager\n"
+    )
+    records = parse_access_file(str(p))
+    assert records[0].name == "Bob Diaz"
+    assert records[0].date_last_used is None
+
+
+def test_first_and_last_name_columns_are_combined(tmp_path):
+    p = tmp_path / "first_last.csv"
+    p.write_text(
+        "First Name,Last Name,email,department,system,permission,"
+        "date_granted,date_last_used,employee_status,manager\n"
+        "Priya,Kapoor,priya.kapoor@example.com,Finance,Finance ERP,"
+        "Standard User,2025-01-01,2026-08-01,Active,Test Manager\n"
+    )
+    records = parse_access_file(str(p))
+    assert records[0].name == "Priya Kapoor"
+
+
+def test_unrelated_columns_still_raise_missing_error(tmp_path):
+    p = tmp_path / "visitor_log.csv"
+    p.write_text(
+        "First Name,Last Name,Email,Access Code,Start Date,Start Time,"
+        "End Date,End Time,Notes\n"
+        "Robert,Miller,rob@contractor.com,884422,2026-09-10,08:00,"
+        "2026-09-12,17:00,HVAC Tech\n"
+    )
+    with pytest.raises(AccessFileError) as excinfo:
+        parse_access_file(str(p))
+    assert "department" in str(excinfo.value)
+    assert "system" in str(excinfo.value)
+
+
 def test_row_numbers_start_at_two(tmp_path):
     path = write_csv(
         tmp_path / "in.csv",
