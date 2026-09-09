@@ -15,6 +15,15 @@ order.
 name, email, department, system, permission, date_granted, date_last_used, employee_status, manager
 ```
 
+A number of common alternate header names are also accepted, so an export
+rarely needs to be renamed by hand first, things like Full Name, Email
+Address, Dept, Application, Role, or separate First Name and Last Name
+columns all work. See the input file section of `README.md` for the full
+list. What always has to be present is the underlying information, who
+has access, to what, at what level, whether they are still employed, and
+who owns that access, a file missing one of those concepts under any name
+will still be rejected, with a message naming exactly what is missing.
+
 A few notes on the columns.
 
 email should be the same value every time a given person appears, this is
