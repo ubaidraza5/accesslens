@@ -108,6 +108,42 @@ function checkAlternateHeaders(engine) {
   console.log(`  ${visitorLogRejected ? "PASS" : "FAIL"}  unrelated columns still rejected`);
   if (!visitorLogRejected) failures++;
 
+  const badgeStyleCSV =
+    "Full Name,Email Address,Department,System,Permission Level," +
+    "Start Date,Last Used,Employment Status,Host\n" +
+    "Jane Doe,jane.doe@example.com,Facilities,Physical Access Control," +
+    "Contractor,2025-01-01,2026-08-01,Contractor,Test Manager\n";
+  const badgeRecords = engine.parseAccessCSV(badgeStyleCSV);
+  const badgeOk =
+    badgeRecords[0].employeeStatus === "Contractor" &&
+    badgeRecords[0].manager === "Test Manager";
+  console.log(`  ${badgeOk ? "PASS" : "FAIL"}  employment status, host, and start date aliases accepted`);
+  if (!badgeOk) failures++;
+
+  // A badge or door system often logs a validity start and end date, not
+  // when access was actually used. That end date must never be guessed as
+  // date_last_used, so this file stays missing exactly that one column
+  // even once every other column resolves by name.
+  const badgeNoUsageCSV =
+    "First Name,Last Name,Email,Access Code,Start Date,Start Time," +
+    "End Date,End Time,Department,System,Permission Level," +
+    "Employment Status,Host,Notes\n" +
+    "Robert,Miller,rob@contractor.com,884422,2026-09-10,08:00," +
+    "2026-09-12,17:00,Facilities,Physical Access Control," +
+    "Contractor_HVAC,Contractor,Jane Doe,HVAC Tech\n";
+  let onlyDateLastUsedMissing = false;
+  try {
+    engine.parseAccessCSV(badgeNoUsageCSV);
+  } catch (e) {
+    const missingPart = String(e.message).split("Expected columns are:")[0];
+    onlyDateLastUsedMissing =
+      e instanceof engine.ParseError &&
+      missingPart.includes("date_last_used") &&
+      !missingPart.includes(",");
+  }
+  console.log(`  ${onlyDateLastUsedMissing ? "PASS" : "FAIL"}  validity end date is not guessed as last used`);
+  if (!onlyDateLastUsedMissing) failures++;
+
   return failures;
 }
 
