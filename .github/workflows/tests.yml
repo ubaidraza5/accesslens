@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run pytest suite
+        run: pytest -v
+
+      - name: CLI smoke test, simple mode
+        run: python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09
+
+      - name: CLI smoke test, analyst mode
+        run: python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --mode analyst
+
+      - name: CLI smoke test, clean export
+        run: python main.py tests/fixtures/clean_company_access.csv --as-of 2026-09-09
+
+      - name: CLI smoke test, JSON export
+        run: |
+          python main.py tests/fixtures/sample_company_access.csv --as-of 2026-09-09 --json /tmp/report.json
+          python -c "import json; d = json.load(open('/tmp/report.json')); assert d['company_level'] == 'Critical', d"
+
+  verify-web-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify web demo matches the Python engine
+        run: node scripts/verify_web_demo.js
