@@ -143,6 +143,13 @@ node scripts/verify_web_demo.js
 Both checks run automatically in CI on every change, and the browser demo
 only deploys once they both pass.
 
+## Development notes
+
+`DEVELOPMENT_NOTES.md` records the real problems found while building
+this project, and how each one was fixed, from a scoring edge case to a
+GitHub Pages setting that needed changing before the live demo would
+load.
+
 ## Security and privacy
 
 See `SECURITY.md`. In short, nothing pasted or uploaded to the browser
