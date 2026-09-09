@@ -188,6 +188,44 @@ def test_first_and_last_name_columns_are_combined(tmp_path):
     assert records[0].name == "Priya Kapoor"
 
 
+def test_employment_status_host_and_start_date_aliases_are_accepted(tmp_path):
+    p = tmp_path / "badge_style.csv"
+    p.write_text(
+        "Full Name,Email Address,Department,System,Permission Level,"
+        "Start Date,Last Used,Employment Status,Host\n"
+        "Jane Doe,jane.doe@example.com,Facilities,Physical Access Control,"
+        "Contractor,2025-01-01,2026-08-01,Contractor,Test Manager\n"
+    )
+    records = parse_access_file(str(p))
+    assert records[0].date_granted == date(2025, 1, 1)
+    assert records[0].employee_status == "Contractor"
+    assert records[0].manager == "Test Manager"
+
+
+def test_a_validity_end_date_is_not_treated_as_last_used(tmp_path):
+    # A badge or door access export often has a start and end date for how
+    # long access is valid, but that is not the same fact as when the
+    # access was actually last used, so AccessLens must not guess one from
+    # the other. A file like this is still missing date_last_used even
+    # after every other column has a matching name.
+    p = tmp_path / "badge_no_usage.csv"
+    p.write_text(
+        "First Name,Last Name,Email,Access Code,Start Date,Start Time,"
+        "End Date,End Time,Department,System,Permission Level,"
+        "Employment Status,Host,Notes\n"
+        "Robert,Miller,rob@contractor.com,884422,2026-09-10,08:00,"
+        "2026-09-12,17:00,Facilities,Physical Access Control,"
+        "Contractor_HVAC,Contractor,Jane Doe,HVAC Tech\n"
+    )
+    with pytest.raises(AccessFileError) as excinfo:
+        parse_access_file(str(p))
+    missing_part = str(excinfo.value).split("Expected columns are:")[0]
+    assert "date_last_used" in missing_part
+    # everything else about this file is now recognised, so date_last_used
+    # is the only column actually reported as missing
+    assert missing_part.count(",") == 0
+
+
 def test_unrelated_columns_still_raise_missing_error(tmp_path):
     p = tmp_path / "visitor_log.csv"
     p.write_text(
